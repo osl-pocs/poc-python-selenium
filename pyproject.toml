@@ -21,6 +21,7 @@ containers-sugar = "1.4.4"
 docker-compose = "^1.29.2"
 selenium = "^4.3.0"
 chromedriver-binary-auto = "^0.2.5"
+webdriver-manager = "^3.8.5"
 
 [build-system]
 requires = ["poetry-core"]
