@@ -1,0 +1,10 @@
+version: 1.0.0
+compose-app: docker-compose
+service-groups:
+  - name: group1
+    project-name: python-selenium
+    compose-path: containers/compose.yaml
+    services:
+      default: service1
+      list:
+        - name: service1

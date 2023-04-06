@@ -1,0 +1,61 @@
+name: main
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  main:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash -l {0}
+    concurrency:
+      group: ci-main-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        mamba-version: "*"
+        environment-file: conda/dev.yaml
+        channels: conda-forge,nodefaults
+        activate-environment: poc-py-selenium
+        use-mamba: true
+        miniforge-variant: Mambaforge
+
+    - uses: nanasess/setup-chromedriver@v2
+
+    - run: |
+        export DISPLAY=:99
+        chromedriver --url-base=/wd/hub &
+        sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+
+    - name: setup
+      run: poetry install --no-root
+
+    - name: build docker containers
+      run: containers-sugar pull --all
+
+    - name: start services
+      run: containers-sugar start --all && sleep 10
+
+    - name: run tests
+      run: |
+        export CHROMEDRIVER=$(which chromedriver)
+        python tests/test_selenium.py
+
+    - name: stop services
+      run: containers-sugar stop --all
+
+    - name: linter
+      run: |
+        pre-commit install
+        pre-commit run --all-files
